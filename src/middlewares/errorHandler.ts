@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import logger from "../utils/logger";
+import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 export const errorHandler = (
   err: any, //TODO
@@ -7,9 +7,9 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("log...", err);
   logger.error(`${req.method} ${req.url} - ${err}`);
+
   res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
+    message: err.message || 'Internal Server Error',
   });
 };

@@ -1,17 +1,16 @@
-import { Request } from "express";
-import multer from "multer";
-import path from "path";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "../config/cloudinary";
+import { Request } from 'express';
+import multer from 'multer';
+import path from 'path';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary';
 
 //  Define storage for uploaded file
 const storageDS = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, "uploads/");
+    cb(null, 'uploads/');
   },
   filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    console.log("logging...", uniqueSuffix);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
@@ -22,10 +21,10 @@ const imgFilter = (
   file: Express.Multer.File,
   callback: any //TODO
 ) => {
-  if (file.mimetype.startsWith("image/")) {
+  if (file.mimetype.startsWith('image/')) {
     callback(null, true);
   } else {
-    callback(new Error("Only image files are allowed"), false);
+    callback(new Error('Only image files are allowed'), false);
   }
 };
 

@@ -1,20 +1,20 @@
-import { NextFunction, Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import User from "../models/User";
-import { AuthRequest } from "../middlewares/authMiddleware";
-import cloudinary from "../config/cloudinary";
+import { NextFunction, Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import User from '../models/User';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import cloudinary from '../config/cloudinary';
 
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const user = await User.findById(req.user?.id).select("-password");
+    const user = await User.findById(req.user?.id).select('-password');
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -26,11 +26,10 @@ export const updateUserProfile = async (
   try {
     const user = await User.findById(req.user?.id);
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
-    console.log("logging...", user, req.file, req.body);
     user.username = req.body.username || user.username;
     user.email = req.body.email || user.email;
     if (req.file) {
@@ -41,9 +40,9 @@ export const updateUserProfile = async (
 
     await user.save();
 
-    res.json({ message: "Profile updated successfully", user });
+    res.json({ message: 'Profile updated successfully', user });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
     next(error);
   }
 };
@@ -55,20 +54,20 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const limit = Number(req.query.limit) || 10; // Default: 10 users per page
     const skip = (page - 1) * limit;
 
-    const searchQuery = req.query.search ? (req.query.search as string) : "";
-    const roleFilter = req.query.role ? (req.query.role as string) : "";
+    const searchQuery = req.query.search ? (req.query.search as string) : '';
+    const roleFilter = req.query.role ? (req.query.role as string) : '';
     const sortBy = req.query.sortBy
       ? (req.query.sortBy as string)
-      : "createdAt"; // Default: sort by createdAt
-    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1; // Default: descending order
+      : 'createdAt'; // Default: sort by createdAt
+    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1; // Default: descending order
 
     const query: any = {};
 
     // Search by username or email (case-insensitive)
     if (searchQuery) {
       query.$or = [
-        { username: { $regex: searchQuery, $options: "i" } },
-        { email: { $regex: searchQuery, $options: "i" } },
+        { username: { $regex: searchQuery, $options: 'i' } },
+        { email: { $regex: searchQuery, $options: 'i' } },
       ];
     }
 
@@ -78,7 +77,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     }
 
     const users = await User.find(query)
-      .select("-password")
+      .select('-password')
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(limit);
@@ -88,22 +87,22 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
     res.json({ users, page, totalPages, totalUsers });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 // GET single user by ID (Admin only)
 export const getUserById = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await User.findById(req.params.id).select('-password');
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -112,7 +111,7 @@ export const updateUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
@@ -121,9 +120,9 @@ export const updateUser = async (req: Request, res: Response) => {
     user.role = req.body.role || user.role; // Admin can update roles
 
     await user.save();
-    res.json({ message: "User updated successfully", user });
+    res.json({ message: 'User updated successfully', user });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -132,14 +131,14 @@ export const deleteUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
     await user.deleteOne();
-    res.json({ message: "User deleted successfully" });
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -154,13 +153,13 @@ export const softDeleteUser = async (req: Request, res: Response) => {
     );
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
-    res.json({ message: "User soft deleted successfully" });
+    res.json({ message: 'User soft deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -175,13 +174,13 @@ export const restoreUser = async (req: Request, res: Response) => {
     );
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
-    res.json({ message: "User restored successfully" });
+    res.json({ message: 'User restored successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -190,7 +189,7 @@ export const updateUserPassword = async (req: AuthRequest, res: Response) => {
     const user = await User.findById(req.user?.id);
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
@@ -199,21 +198,21 @@ export const updateUserPassword = async (req: AuthRequest, res: Response) => {
     if (!currentPassword || !newPassword) {
       res
         .status(400)
-        .json({ message: "Both current and new passwords are required" });
+        .json({ message: 'Both current and new passwords are required' });
       return;
     }
 
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
-      res.status(401).json({ message: "Incorrect current password" });
+      res.status(401).json({ message: 'Incorrect current password' });
       return;
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ message: "Password updated successfully" });
+    res.json({ message: 'Password updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
