@@ -1,0 +1,45 @@
+const MESSAGE = {
+  SERVER_RUNNING: 'Server is running!',
+  SERVER_LISTENING: 'Server running on port',
+  MONGO_CONNECTED: '✅ MongoDB connected',
+  MONGO_ERROR: '❌ MongoDB connection error:',
+  INVALID_ROLE: 'invalid role specified',
+  SERVER_ERROR: 'Server error',
+  INVALID_CREDENTIALS: 'Invalid credentials',
+  USER_REGISTERED: 'User registered successfully',
+  USER_NOT_FOUND: 'User not found',
+  USER_EXISTS: 'User already exists',
+  USER_UPDATED: 'User updated successfully',
+  USER_DELETED: 'User deleted successfully',
+  USER_SOFT_DELETED: 'User soft deleted successfully',
+  USER_RESTORED: 'User restored successfully',
+  OTP_INVALID: 'Invalid OTP',
+  OTP_EXPIRED: 'OTP expired',
+  OTP_INVALID_OR_EXPIRED: 'Invalid or expired OTP',
+  OTP_SENT: 'OTP sent successfully',
+  OTP_VERIFIED: 'OTP verified successfully',
+  EMAIL_VERIFIED: 'Email verified successfully',
+  EMAIL_ALREADY_VERIFIED: 'Email already verified',
+  EMAIL_NOT_FOUND: 'Email not found',
+  EMAIL_SENT: 'Verification email sent successfully',
+  PASSWORD_RESET: 'Password reset successful',
+  PASSWORD_UPDATED: 'Password updated successfully',
+  PASSWORD_RESET_EMAIL_SENT: 'Password reset email sent successfully',
+  PASSWORD_RESET_OTP_SENT: 'Password reset OTP sent successfully',
+  PASSWORD_RESET_OTP_VERIFIED: 'Password reset OTP verified successfully',
+  PASSWORD_RESET_OTP_INCORRECT: 'Incorrect OTP',
+  PASSWORD_RESET_OTP_RESENT: 'Password reset OTP resent successfully',
+  PASSWORD_RESET_OTP_RESEND_LIMIT: 'Resend limit reached. Try again later',
+  PASSWORD_RESET_OTP_RESEND_SUCCESS: 'Password reset OTP resent successfully',
+  PASSWORD_RESET_OTP_RESEND_ERROR: 'Error resending OTP',
+  PASSWORD_RESET_OTP_RESEND_EMAIL_SENT:
+    'Password reset OTP resent email sent successfully',
+  PASSWORD_RESET_OTP_RESEND_EMAIL_ERROR:
+    'Error sending password reset OTP email',
+  PASSWORD_RESET_OTP_RESEND_EMAIL_LIMIT:
+    'Resend limit reached. Try again later',
+  PASSWORD_RESET_OTP_RESEND_EMAIL_SUCCESS:
+    'Password reset OTP resent email sent successfully',
+};
+
+export default MESSAGE;

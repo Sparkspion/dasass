@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import { AuthRequest } from '../middlewares/authMiddleware';
 import cloudinary from '../config/cloudinary';
+import MESSAGE from '../base/messages';
 
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
@@ -14,7 +15,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -42,7 +43,7 @@ export const updateUserProfile = async (
 
     res.json({ message: 'Profile updated successfully', user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
     next(error);
   }
 };
@@ -87,7 +88,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
     res.json({ users, page, totalPages, totalUsers });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -102,7 +103,7 @@ export const getUserById = async (req: Request, res: Response) => {
 
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -122,7 +123,7 @@ export const updateUser = async (req: Request, res: Response) => {
     await user.save();
     res.json({ message: 'User updated successfully', user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -138,7 +139,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     await user.deleteOne();
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -159,7 +160,7 @@ export const softDeleteUser = async (req: Request, res: Response) => {
 
     res.json({ message: 'User soft deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -180,7 +181,7 @@ export const restoreUser = async (req: Request, res: Response) => {
 
     res.json({ message: 'User restored successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -213,6 +214,6 @@ export const updateUserPassword = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: MESSAGE.SERVER_ERROR });
   }
 };

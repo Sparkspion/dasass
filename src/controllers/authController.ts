@@ -1,46 +1,63 @@
-import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import User from "../models/User";
-import speakeasy from "speakeasy";
-import { sendEmail } from "../utils/email";
-import { v4 as uuidv4 } from "uuid";
-import { generateAccessToken, generateRefreshToken } from "../utils/auth";
-import { AuthRequest } from "../middlewares/authMiddleware";
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/User';
+import speakeasy from 'speakeasy';
+import { sendEmail } from '../utils/email';
+import { v4 as uuidv4 } from 'uuid';
+import { generateAccessToken, generateRefreshToken } from '../utils/auth';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import {
+  ALL_ROLES,
+  COOKIE,
+  HTTP_STATUS,
+  OTP_DIGITS,
+  OTP_DURATION,
+  OTP_EXPIRY_DURATION,
+  ROLES,
+  SALT,
+} from '../base/const';
+import MESSAGE from '../base/messages';
 
 export const register = async (req: Request, res: Response) => {
   try {
     const { username, email, password, role } = req.body;
 
     // validate role
-    const validRoles = ["user", "admin"];
-    if (!role || !validRoles.includes(role)) {
-      res.status(400).json({ message: "invalid role specified" });
+    if (!role || !ALL_ROLES.includes(role)) {
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: MESSAGE.INVALID_ROLE });
       return;
     }
 
     //check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(400).json({ message: "User already exists" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: MESSAGE.USER_EXISTS });
       return;
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, SALT);
 
     // Create user
-    const user = new User({
+    const newUser = {
       username,
       email,
       password: hashedPassword,
-      role: role || "user",
-    });
+      role: role || ROLES.USER,
+    };
+    const user = new User(newUser);
     await user.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(HTTP_STATUS.CREATED).json({ message: MESSAGE.USER_REGISTERED });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -51,7 +68,9 @@ export const login = async (req: Request, res: Response) => {
     // Find user and check password
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      res.status(400).json({ message: "Invalid credentials" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: MESSAGE.INVALID_CREDENTIALS });
       return;
     }
 
@@ -61,10 +80,15 @@ export const login = async (req: Request, res: Response) => {
     user.refreshTokens?.push(refreshToken);
     await user.save();
 
-    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: true });
+    res.cookie(COOKIE.REFRESH_TOKEN, refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
     res.json({ accessToken });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -73,25 +97,29 @@ export const sendMfaOtp = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ message: MESSAGE.USER_NOT_FOUND });
       return;
     }
 
     const otp = speakeasy.totp({
       secret: process.env.OTP_SECRET!,
-      digits: 6,
-      step: 300, // OTP valid for 5 minutes
+      digits: OTP_DIGITS,
+      step: OTP_DURATION,
     });
 
     user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // Expires in 5 min
+    user.otpExpires = new Date(Date.now() + OTP_EXPIRY_DURATION);
     await user.save();
 
-    await sendEmail(user.email, "Your OTP Code", `Your OTP is: ${otp}`);
+    await sendEmail(user.email, 'Your OTP Code', `Your OTP is: ${otp}`);
 
-    res.json({ message: "OTP sent successfully" });
+    res.json({ message: MESSAGE.OTP_SENT });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -100,17 +128,23 @@ export const verifyMfaOtp = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (!user || !user.otp || !user.otpExpires) {
-      res.status(400).json({ message: "Invalid or expired OTP" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: MESSAGE.OTP_INVALID_OR_EXPIRED });
       return;
     }
 
     if (Date.now() > new Date(user.otpExpires).getTime()) {
-      res.status(400).json({ message: "OTP expired" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: MESSAGE.OTP_EXPIRED });
       return;
     }
 
     if (user.otp !== req.body.otp) {
-      res.status(400).json({ message: "Incorrect OTP" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: MESSAGE.OTP_INVALID });
       return;
     }
 
@@ -118,9 +152,11 @@ export const verifyMfaOtp = async (req: Request, res: Response) => {
     user.otpExpires = undefined;
     await user.save();
 
-    res.json({ message: "MFA verification successful" });
+    res.json({ message: 'MFA verification successful' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -129,12 +165,16 @@ export const sendVerificationEmail = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ message: MESSAGE.USER_NOT_FOUND });
       return;
     }
 
     if (user.isVerified) {
-      res.status(400).json({ message: "Email already verified" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: 'Email already verified' });
       return;
     }
 
@@ -142,13 +182,15 @@ export const sendVerificationEmail = async (req: Request, res: Response) => {
 
     await sendEmail(
       user.email,
-      "Verify Your Email",
+      'Verify Your Email',
       `Click here to verify: ${verificationLink}`
     );
 
-    res.json({ message: "Verification email sent" });
+    res.json({ message: 'Verification email sent' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -159,7 +201,9 @@ export const verifyEmail = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      res.status(400).json({ message: "Invalid or expired token" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: 'Invalid or expired token' });
       return;
     }
 
@@ -167,9 +211,11 @@ export const verifyEmail = async (req: Request, res: Response) => {
     user.emailVerificationToken = undefined;
     await user.save();
 
-    res.json({ message: "Email verified successfully" });
+    res.json({ message: MESSAGE.EMAIL_VERIFIED });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -178,7 +224,9 @@ export const sendPasswordResetEmail = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ message: MESSAGE.USER_NOT_FOUND });
       return;
     }
 
@@ -190,13 +238,15 @@ export const sendPasswordResetEmail = async (req: Request, res: Response) => {
 
     await sendEmail(
       user.email,
-      "Reset Your Password",
+      'Reset Your Password',
       `Click here to reset: ${resetLink}`
     );
 
-    res.json({ message: "Password reset email sent" });
+    res.json({ message: 'Password reset email sent' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -208,7 +258,9 @@ export const resetPassword = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      res.status(400).json({ message: "Invalid or expired token" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ message: 'Invalid or expired token' });
       return;
     }
 
@@ -217,9 +269,11 @@ export const resetPassword = async (req: Request, res: Response) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.json({ message: "Password reset successful" });
+    res.json({ message: 'Password reset successful' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };
 
@@ -227,7 +281,9 @@ export const refreshToken = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    res.status(401).json({ message: "No refresh token provided" });
+    res
+      .status(HTTP_STATUS.UNAUTHORIZED)
+      .json({ message: 'No refresh token provided' });
     return;
   }
 
@@ -236,14 +292,18 @@ export const refreshToken = async (req: Request, res: Response) => {
     const user = await User.findById(decoded.userId);
 
     if (!user || !user.refreshTokens?.includes(refreshToken)) {
-      res.status(403).json({ message: "Invalid refresh token" });
+      res
+        .status(HTTP_STATUS.FORBIDDEN)
+        .json({ message: 'Invalid refresh token' });
       return;
     }
 
     const newAccessToken = generateAccessToken(String(user._id));
     res.json({ accessToken: newAccessToken });
   } catch (error) {
-    res.status(403).json({ message: "Invalid or expired refresh token" });
+    res
+      .status(HTTP_STATUS.FORBIDDEN)
+      .json({ message: 'Invalid or expired refresh token' });
   }
 };
 
@@ -251,7 +311,9 @@ export const logout = async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.user?.id);
     if (!user) {
-      res.status(401).json({ message: "User not found" });
+      res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json({ message: MESSAGE.USER_NOT_FOUND });
       return;
     }
 
@@ -260,9 +322,11 @@ export const logout = async (req: AuthRequest, res: Response) => {
     );
     await user.save();
 
-    res.clearCookie("refreshToken");
-    res.json({ message: "Logged out successfully" });
+    res.clearCookie('refreshToken');
+    res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ message: MESSAGE.SERVER_ERROR });
   }
 };

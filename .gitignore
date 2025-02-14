@@ -3,3 +3,5 @@
 node_modules/
 *.http
 _temp
+dist/
+logs/
